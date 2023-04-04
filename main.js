@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 
+// create scene
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x000000);
 
-const camera = new THREE.PerspectiveCamera( 80, window.innerWidth / window.innerHeight, 0.1, 1000 );
-// FoV, aspect ratio (width/height), cutoff values
+// FoV, aspect ratio (width / height), cutoff values
+const camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 45, 30000 );
+camera.position.set( 1200, -250, 20000 );
 
 const renderer = new THREE.WebGLRenderer();
 
@@ -48,5 +50,3 @@ scene.add(skybox);
 scene.add(sunOutline);
 
 animate();
-
-camera.position.set(0,0,10);
