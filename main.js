@@ -6,7 +6,7 @@ scene.background = new THREE.Color(0x000000);
 
 // FoV, aspect ratio (width / height), cutoff values
 const camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 45, 30000 );
-camera.position.set( 1200, -250, 20000 );
+camera.position.set(1200, -250, 2000);
 
 const renderer = new THREE.WebGLRenderer();
 
@@ -14,9 +14,35 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 
 document.body.appendChild(renderer.domElement);
 
+function createPathStrings(filename) {
+    const basePath = "./src/assets/skybox"
+    const baseFilename = basePath + filename;
+    const fileType = ".jpg";
+    const sides = ["front", "back", "up", "down", "right", "left"];
+
+    const pathStrings = sides.map(side => {
+        return baseFilename + "_" + side + fileType;
+    })
+    
+    return pathStrings;
+}
+
+function createMaterialArray(filename) {
+    const skyboxImagePaths = createPathStrings(filename);
+    const materialArray = skyboxImagePaths.map(image => {
+        let texture = new THREE.TextureLoader().load(image);
+        return texture;
+      });
+
+      return materialArray;
+}
+
+const skyboxImage = 'sky';
+
 // Skybox
 const skyboxGeom = new THREE.BoxGeometry( 10000, 10000, 10000 );
-const skyboxMaterial = new THREE.MeshBasicMaterial( { color:0xffffff } );
+const skyboxMaterial = createMaterialArray(skyboxImage);
+
 const skybox = new THREE.Mesh( skyboxGeom, skyboxMaterial );
 
 // Main Sun
