@@ -34,6 +34,37 @@ controls.update();
 // distance: The body's distance from the Sun (for example: 100.0)
 // ringRadii: A list containing the inner and outer ring radii (for example: {innerRadius: 10, outerRadius: 20})
 
+function createRing(bodyName, ringRadii) {
+	const ringGeom = new THREE.RingGeometry(
+		ringRadii.innerRadius, 
+		ringRadii.outerRadius
+	);
+	
+	// Make a path name for the ring texture image file, then use that to make a ring texture
+	const ringPath = "assets/maps/" + bodyName + "Ring.png";
+	const ringTexture = new THREE.TextureLoader().load(ringPath);
+
+	// Use the ring geometry and ring material to make a ring mesh
+	const ringMat = new THREE.MeshBasicMaterial({
+		map: ringTexture,
+		side: THREE.DoubleSide
+	});
+	return new THREE.Mesh(ringGeom, ringMat);
+}
+
+// Create a representation for the object's orbit
+// distance: distance from the Sun
+function createOrbit(distance) {
+	// Create a representation for the body's orbit based on its distance
+	const orbitGeom = new THREE.TorusGeometry(distance, 0.1);
+	const orbitMat = new THREE.MeshBasicMaterial({
+		color: 0xffffff,
+		transparent: true,
+		opacity: 0.5
+	});
+	return new THREE.Mesh(orbitGeom, orbitMat);
+}
+
 function createBody(bodyName, bodyRadius, distance, ringRadii) {
 
 	// Create the body's geometry using the body's Radius
@@ -60,34 +91,14 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 	body.position.set(distance, 0, 0);
 
 	// Create a representation for the body's orbit based on its distance
-	const orbitGeom = new THREE.TorusGeometry(distance, 0.1);
-	const orbitMat = new THREE.MeshBasicMaterial({
-		color: 0xffffff,
-		transparent: true,
-		opacity: 0.5
-	});
-	const orbit = new THREE.Mesh(orbitGeom, orbitMat);
+	const orbit = createOrbit(distance);
 	scene.add(orbit);
 	orbit.rotation.x += 0.5 * Math.PI;
 
 	// This if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
 		
-		const ringGeom = new THREE.RingGeometry(
-			ringRadii.innerRadius, 
-			ringRadii.outerRadius
-		);
-		
-		// Make a path name for the ring texture image file, then use that to make a ring texture
-		const ringPath = "assets/maps/" + bodyName + "Ring.png";
-		const ringTexture = new THREE.TextureLoader().load(ringPath);
-
-		// Use the ring geometry and ring material to make a ring mesh
-		const ringMat = new THREE.MeshBasicMaterial({
-			map: ringTexture,
-			side: THREE.DoubleSide
-		});
-		const ring = new THREE.Mesh(ringGeom, ringMat);
+		const ring = createRing(bodyName, ringRadii);
 
 		// Add the ring to the pivot and set its distance from the Sun
 		pivot.add(ring);
