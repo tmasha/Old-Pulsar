@@ -1,7 +1,16 @@
 import * as THREE from 'three';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.CubeTextureLoader()
+	.setPath("maps/skybox/")
+	.load([
+		'px.jpg',
+		'nx.jpg',
+		'py.jpg',
+		'ny.jpg',
+		'pz.jpg',
+		'nz.jpg',
+	]);
 
 const camera = new THREE.PerspectiveCamera( 80, window.innerWidth / window.innerHeight, 0.1, 1000 );
 camera.position.set(0,0,10);
@@ -23,12 +32,12 @@ const sunGeom = new THREE.SphereGeometry( 5, 10, 10 );
 const sunMaterial = new THREE.MeshBasicMaterial( { color:0x111111 } );
 const sun = new THREE.Mesh(sunGeom, sunMaterial);
 
-// 2 ways to create a line
+// Sun Edges
 const sunEdges = new THREE.EdgesGeometry(sunGeom);
 const sunOutlineMaterial = new THREE.LineBasicMaterial({color: 0xfff700});
 const sunOutline = new THREE.LineSegments(sunEdges, sunOutlineMaterial);
 
-// do all animation in this function
+// Do all animation in this function
 function animate() {
     requestAnimationFrame(animate);
 
