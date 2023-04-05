@@ -38,7 +38,7 @@ function createSphere(name, radius) {
 	// create the sphere
 	const geom = new THREE.SphereGeometry(radius);
 	const texture = new THREE.TextureLoader().load(path);
-	const material = new THREE.MeshBasicMaterial({
+	const material = new THREE.MeshStandardMaterial({
 		map: texture,
 	});
 	
@@ -50,24 +50,36 @@ function createSphere(name, radius) {
 const sunGeom = new THREE.SphereGeometry(5);
 const sunMaterial = new THREE.MeshBasicMaterial( { color:0xffffff } );
 const sun = new THREE.Mesh(sunGeom, sunMaterial);
+const pointLight = new THREE.PointLight(0xffffff, 2, 300);
 
 // Main planets
 const mercury = createSphere("mercury", 1);
 const venus = createSphere("venus", 3);
 const earth = createSphere("earth", 3);
 
+// Moons
+const titan = createSphere("titan", 1);
+
 
 // add wanted objects to scene
 scene.add(sun);
+scene.add(pointLight);
 
-scene.add(mercury);
-mercury.position.set(10, 0, 0);
+// Mercury
+const mercuryObj = new THREE.Object3D();
+scene.add(mercuryObj);
+mercuryObj.add(mercury);
+mercury.position.set(25, 0, 0)
 
-scene.add(venus);
-venus.position.set(-20, 0, -20);
+const venusObj = new THREE.Object3D();
+scene.add(venusObj);
+venusObj.add(venus);
+venus.position.set(50, 0, 0);
 
-scene.add(earth);
-earth.position.set(-5, 0, 45);
+const earthObj = new THREE.Object3D();
+scene.add(earthObj);
+earthObj.add(earth);
+earth.position.set(75, 0, 0);
 
 // Do all animation in this function
 function animate() {
@@ -75,7 +87,18 @@ function animate() {
 
     sun.rotation.y += 0.005;
 
+
 	// Mercury
+	mercury.rotation.y += 0.001;
+	mercuryObj.rotation.y += 0.00088 * 2;
+
+	// Venus
+	venus.rotation.y += 0.001;
+	venusObj.rotation.y += 0.000225 * 2;
+
+	// Earth
+	earth.rotation.y += 0.001;
+	earthObj.rotation.y += 0.000365 * 2;
 
 
     renderer.render(scene, camera);
