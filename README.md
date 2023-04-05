@@ -1,2 +1,2 @@
-# threejs-testing
-Project for me to use to test Three.js
+# Solar System Model 💫
+WIP Three.js Solar System model
