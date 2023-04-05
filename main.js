@@ -54,32 +54,56 @@ function createRing(bodyName, ringRadii) {
 
 // Create a representation for the object's orbit
 // distance: distance from the Sun
-function createOrbit(distance) {
-	// Create a representation for the body's orbit based on its distance
-	const orbitGeom = new THREE.TorusGeometry(distance, 0.1);
-	const orbitMat = new THREE.MeshBasicMaterial({
-		color: 0xffffff,
-		transparent: true,
-		opacity: 0.5
-	});
-	return new THREE.Mesh(orbitGeom, orbitMat);
+
+
+// Create a representation for the orbit
+// PARAMETERS
+// a: semi-major axis in million km
+// b: semi-major axis in million km
+// tilt: the axial tilt in degrees (i.e. 23.44)
+// inclination: the orbital inclination to the ecliptic in degrees (i.e. 7.155)
+function createOrbit(body, a, b, tilt, inclination) {
+    
+	// eccentricity = Math.sqrt(1 - (b*b) / (a*a))
+    // create ellipse curve for orbit
+    const curve = new THREE.EllipseCurve(
+        0, 0, // x, y
+        a, b, // xRadius, yRadius
+        0, 2 * Math.PI, // startAngle, endAngle
+        false, // clockwise
+        0 // rotation
+    );
+
+    // create orbit path from curve
+    const orbitPath = curve.getPoints(100);
+    const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
+    const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+    const orbit = new THREE.Line(orbitGeom, orbitMat);
+    orbit.rotation.x += Math.PI / 2;
+
+	// add orbit to scene
+    scene.add(orbit);
+
+    // set axial tilt and orbital inclination
+    tilt *= Math.PI / 180;
+    inclination *= Math.PI / 180;
+    body.body.rotation.x += tilt;
+    body.pivot.rotation.x += inclination;
 }
+
 
 function createBody(bodyName, bodyRadius, distance, ringRadii) {
 
 	// Create the body's geometry using the body's Radius
 	const bodyGeom = new THREE.SphereGeometry(bodyRadius);
-
 	// Create a path name for the body texture image file, then use that to make a body texture
 	const bodyPath = "assets/maps/" + bodyName + ".png";
 	const bodyTexture = new THREE.TextureLoader().load(bodyPath);
-
 	// Use the body texture and body material to make a body mesh
 	const bodyMat = new THREE.MeshStandardMaterial({
 		map: bodyTexture,
 	});
-	
-	// Create a planet
+	// Create a body
 	const body = new THREE.Mesh(bodyGeom, bodyMat);
 
 	// Create a pivot to control the planet's orbit around the Sun, then add the body to the pivot
@@ -90,10 +114,7 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 	scene.add(pivot);
 	body.position.set(distance, 0, 0);
 
-	// Create a representation for the body's orbit based on its distance
-	const orbit = createOrbit(distance);
-	scene.add(orbit);
-	orbit.rotation.x += 0.5 * Math.PI;
+	// Create a repres
 
 	// This if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
@@ -106,12 +127,12 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 		ring.rotation.x = -0.5 * Math.PI;
 
 		// Return body, ring, pivot so they can be accessed later
-		return {body, ring, pivot, orbit}
+		return {body, ring, pivot}
 
 	}
 
 	// If ring is not rendered, just return a body and pivot
-	return {body, pivot, orbit}
+	return {body, pivot}
 }
 
 // set the orbital period and rotation period
@@ -119,6 +140,7 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 // body: the body we want to modify (example: earth)
 // yearLength: the year length in Earth days (i.e. 365)
 // dayLength: the day length in Earth days (i.e. 1)
+
 function setPeriods(body, dayLength, yearLength) {
 	
 	// orbitalPeriod: orbital period in radians/seconds
@@ -150,7 +172,7 @@ function setTilts(body, tilt, inclination) {
 	// set each accordingly
 	body.body.rotation.x += tilt;
 	body.pivot.rotation.x += inclination;
-	body.orbit.rotation.x += inclination;
+	// body.orbit.rotation.x += inclination;
 }
 
 // Sun
@@ -161,7 +183,8 @@ const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 
 // Main planets
 const mercury = createBody("mercury", 1, 25);
-setTilts(mercury, 2.04, 7);
+
+const orbit = createOrbit(mercury, 57.91, 55.91, 2.04, 7);
 
 const venus = createBody("venus", 3, 50);
 setTilts(venus, 2.64, 3.39);
