@@ -31,7 +31,8 @@ controls.update();
 // PARAMETERS;
 // bodyName: The name of the body as a lowercase String (for example: "mercury")
 // bodyRadius: The radius of the body (for example: 20.0)
-// 
+// distance: The body's distance from the Sun (for example: 100.0)
+// ringRadii: A list containing the inner and outer ring radii (for example: {innerRadius: 10, outerRadius: 20})
 
 function createBody(bodyName, bodyRadius, distance, ringRadii) {
 
@@ -89,6 +90,13 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 
 	// If ring is not rendered, just return a body and pivot
 	return {body, pivot}
+}
+
+// set the orbital period and rotation period
+// PARAMETERS
+function setPeriods(body, orbitalPeriod, rotationPeriod) {
+
+
 }
 
 // Sun
