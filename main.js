@@ -29,7 +29,7 @@ controls.update();
 
 // This function creates a celestial body
 // PARAMETERS;
-// bodyName: The name of the body as a lowercase String (for example: "mercury")
+// bodyName: The name of the body as a lowercase String (for example: "earth")
 // bodyRadius: The radius of the body (for example: 20.0)
 // distance: The body's distance from the Sun (for example: 100.0)
 // ringRadii: A list containing the inner and outer ring radii (for example: {innerRadius: 10, outerRadius: 20})
@@ -59,6 +59,17 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 	scene.add(pivot);
 	body.position.set(distance, 0, 0);
 
+	// Create a representation for the body's orbit based on its distance
+	const orbitGeom = new THREE.TorusGeometry(distance, 0.1);
+	const orbitMat = new THREE.MeshBasicMaterial({
+		color: 0xffffff,
+		transparent: true,
+		opacity: 0.5
+	});
+	const orbit = new THREE.Mesh(orbitGeom, orbitMat);
+	scene.add(orbit);
+	orbit.rotation.x += 0.5 * Math.PI;
+
 	// This if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
 		
@@ -84,19 +95,51 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 		ring.rotation.x = -0.5 * Math.PI;
 
 		// Return body, ring, pivot so they can be accessed later
-		return {body, ring, pivot}
+		return {body, ring, pivot, orbit}
 
 	}
 
 	// If ring is not rendered, just return a body and pivot
-	return {body, pivot}
+	return {body, pivot, orbit}
 }
 
 // set the orbital period and rotation period
 // PARAMETERS
-function setPeriods(body, orbitalPeriod, rotationPeriod) {
+// body: the body we want to modify (example: earth)
+// yearLength: the year length in Earth days (i.e. 365)
+// dayLength: the day length in Earth days (i.e. 1)
+function setPeriods(body, dayLength, yearLength) {
+	
+	// orbitalPeriod: orbital period in radians/seconds
+	// rotationPeriod: rotation period in radians/seconds
+	var orbitalPeriod = (Math.PI * 2) / (yearLength * 86400);
+	var rotationPeriod = (Math.PI * 2) / (dayLength * 86400);
 
+	// Scale it so it doesn't take a gorillion years for anything to happen lmfao
+	const scale = 250;
+	orbitalPeriod *= scale;
+	rotationPeriod *= scale;
 
+	// implement each accordingly
+	body.pivot.rotation.y += orbitalPeriod;
+	body.body.rotation.y += rotationPeriod;
+
+}
+
+// set the axial tilt and orbital inclination
+// PARAMETERS
+// body: the body we want to modify (example: earth)
+// tilt: the axial tilt in degrees (i.e. 23.44)
+// inclination: the orbital inclination to the ecliptic in degrees (i.e. 7.155)
+function setTilts(body, tilt, inclination) {
+	// convert to radians
+	tilt *= Math.PI / 180;
+	inclination *= Math.PI / 180;
+
+	// set each accordingly
+	body.body.rotation.x += tilt;
+	body.pivot.rotation.x += inclination;
+	body.orbit.rotation.x += inclination;
 }
 
 // Sun
@@ -107,15 +150,31 @@ const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 
 // Main planets
 const mercury = createBody("mercury", 1, 25);
+setTilts(mercury, 2.04, 7);
+
 const venus = createBody("venus", 3, 50);
+setTilts(venus, 2.64, 3.39);
+
 const earth = createBody("earth", 3, 75);
+setTilts(earth, 23.439, 0);
+
 const mars = createBody("mars", 1.5, 100);
+setTilts(mars, 25.19, 1.85);
+
 const jupiter = createBody("jupiter", 10, 200);
+setTilts(jupiter, 3.13, 1.3);
 
 const saturn = createBody("saturn", 9, 300, {innerRadius: 10, outerRadius: 20});
+setTilts(saturn, 26.73, 2.49);
 
 const uranus = createBody("uranus", 6, 400);
+setTilts(uranus, 97.77, 0.77);
+
 const neptune = createBody("neptune", 6, 500);
+setTilts(neptune, 28, 1.77);
+
+const pluto = createBody("pluto", 1, 550);
+setTilts(pluto, 120, 17.2);
 
 // add wanted objects to scene
 scene.add(sun);
@@ -127,22 +186,33 @@ function animate() {
 
     sun.rotation.y += 0.005;
 
-
-	// planet.rotation.y += DAY LENGTH
-	// planetObj.rotation.y += YEAR LENGTH
+	// setPeriods(planet, dayLength, yearLength)
 
 	// Mercury
-	mercury.body.rotation.y += 0.0001;
-	mercury.pivot.rotation.y += 0.008;
+	setPeriods(mercury, 59, 88)
 
 	// Venus
-	venus.body.rotation.y += 0.0001;
-	venus.pivot.rotation.y += 0.006;
+	setPeriods(venus, -243, 224.7)
 
 	// Earth
-	earth.body.rotation.y += 0.0001;
-	earth.pivot.rotation.y += 0.006;
+	setPeriods(earth, 1, 365.256);
 
+	// Mars
+	setPeriods(mars, 1.02749125, 686.980);
+
+	// Jupiter
+	setPeriods(jupiter, 0.42, 4333);
+
+	// Saturn
+	setPeriods(saturn, 0.46, 10756);
+
+	// Uranus
+	setPeriods(uranus, 0.71, 30687);
+
+	// Neptune
+	setPeriods(neptune, 0.67, 60190);
+
+	setPeriods(pluto, 6, 90520);
 
     renderer.render(scene, camera);
 }
