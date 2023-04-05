@@ -77,7 +77,7 @@ function createSphere(name, radius, x, ringParams) {
 const sunGeom = new THREE.SphereGeometry(5);
 const sunMaterial = new THREE.MeshBasicMaterial( { color:0xffffff } );
 const sun = new THREE.Mesh(sunGeom, sunMaterial);
-const pointLight = new THREE.PointLight(0xffffff, 2, 500);
+const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 
 // Main planets
 const mercury = createSphere("mercury", 1, 25);
@@ -115,7 +115,27 @@ function animate() {
 
 	// Earth
 	earth.planet.rotation.y += 0.0001;
-	earth.planetObj.rotation.y += 0.006;
+	earth.planetObj.rotation.y += 0.0035;
+
+	// Mars
+	mars.planet.rotation.y += 0.0001;
+	mars.planetObj.rotation.y += 0.002;
+
+	// Jupiter
+	jupiter.planet.rotation.y += 0.0001;
+	jupiter.planetObj.rotation.y += 0.0005;
+
+	// Saturn
+	saturn.planet.rotation.y += 0.0001;
+	saturn.planetObj.rotation.y += 0.0002;
+
+	// Uranus
+	uranus.planet.rotation.y += 0.0001;
+	uranus.planetObj.rotation.y += 0.0001;
+
+	// Neptune
+	neptune.planet.rotation.y += 0.0001;
+	neptune.planetObj.rotation.y += 0.00005;
 
 
     renderer.render(scene, camera);
