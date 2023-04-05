@@ -91,6 +91,9 @@ const saturn = createSphere("saturn", 9, 300, {innerRadius: 10, outerRadius: 20}
 const uranus = createSphere("uranus", 6, 400);
 const neptune = createSphere("neptune", 6, 500);
 
+// Moons
+const moon = createSphere("moon", 1, 5);
+
 // add wanted objects to scene
 scene.add(sun);
 scene.add(pointLight);
