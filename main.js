@@ -15,7 +15,7 @@ scene.background = new THREE.CubeTextureLoader()
 	]);
 
 // set up camera
-const camera = new THREE.PerspectiveCamera( 80, window.innerWidth / window.innerHeight, 0.1, 50000 );
+const camera = new THREE.PerspectiveCamera( 80, window.innerWidth / window.innerHeight, 0.1, 1000 );
 camera.position.set(0, 0, 50);
 
 // set up renderer
@@ -27,45 +27,153 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.update();
 
-// create any sphere
-// name: the name of the object being projected, in lower case (i.e. mercury)
-// radius: the radius of the sphere (i.e. 1.0)
-function createSphere(name, radius, xPosition) {
-	
-	// inject name into a path string
-	const path = "assets/maps/" + name + ".png";
+// This function creates a celestial body
+// PARAMETERS;
+// bodyName: The name of the body as a lowercase String (for example: "earth")
+// bodyRadius: The radius of the body (for example: 20.0)
+// distance: The body's distance from the Sun (for example: 100.0)
+// ringRadii: A list containing the inner and outer ring radii (for example: {innerRadius: 10, outerRadius: 20})
 
-	// create the sphere
-	const geom = new THREE.SphereGeometry(radius);
-	const texture = new THREE.TextureLoader().load(path);
-	const material = new THREE.MeshStandardMaterial({
-		map: texture,
-	});
-	
-	// return it
-	return new THREE.Mesh(geom, material);
-}
-
-function createRing(name, parameters) {
-	
-	const geom = new THREE.RingGeometry(
-		parameters.innerRadius, 
-		parameters.outerRadius, 
-		32
+function createRing(bodyName, ringRadii) {
+	const ringGeom = new THREE.RingGeometry(
+		ringRadii.innerRadius, 
+		ringRadii.outerRadius
 	);
-	const path = "assets/maps/" + name + "Ring.png";
-	const texture = new THREE.TextureLoader().load(path);
-	const material = new THREE.MeshBasicMaterial({
-		map: texture,
+	
+	// Make a path name for the ring texture image file, then use that to make a ring texture
+	const ringPath = "assets/maps/" + bodyName + "Ring.png";
+	const ringTexture = new THREE.TextureLoader().load(ringPath);
+
+	// Use the ring geometry and ring material to make a ring mesh
+	const ringMat = new THREE.MeshBasicMaterial({
+		map: ringTexture,
 		side: THREE.DoubleSide
 	});
-	const ring = new THREE.Mesh(geom, material);
-	ring.rotation.x = -0.5 * Math.PI;
-	
-	// return it
-	return new THREE.Mesh(geom, material);
+	return new THREE.Mesh(ringGeom, ringMat);
 }
 
+// Create a representation for the object's orbit
+// distance: distance from the Sun
+
+
+// Create a representation for the orbit
+// PARAMETERS
+// a: semi-major axis in million km
+// b: semi-major axis in million km
+// tilt: the axial tilt in degrees (i.e. 23.44)
+// inclination: the orbital inclination to the ecliptic in degrees (i.e. 7.155)
+function createOrbit(body, a, b, tilt, inclination) {
+    
+	// eccentricity = Math.sqrt(1 - (b*b) / (a*a))
+    // create ellipse curve for orbit
+    const curve = new THREE.EllipseCurve(
+        0, 0, // x, y
+        a, b, // xRadius, yRadius
+        0, 2 * Math.PI, // startAngle, endAngle
+        false, // clockwise
+        0 // rotation
+    );
+
+    // create orbit path from curve
+    const orbitPath = curve.getPoints(100);
+    const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
+    const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+    const orbit = new THREE.Line(orbitGeom, orbitMat);
+    orbit.rotation.x += Math.PI / 2;
+
+	// add orbit to scene
+    scene.add(orbit);
+
+    // set axial tilt and orbital inclination
+    tilt *= Math.PI / 180;
+    inclination *= Math.PI / 180;
+    body.body.rotation.x += tilt;
+    body.pivot.rotation.x += inclination;
+}
+
+
+function createBody(bodyName, bodyRadius, distance, ringRadii) {
+
+	// Create the body's geometry using the body's Radius
+	const bodyGeom = new THREE.SphereGeometry(bodyRadius);
+	// Create a path name for the body texture image file, then use that to make a body texture
+	const bodyPath = "assets/maps/" + bodyName + ".png";
+	const bodyTexture = new THREE.TextureLoader().load(bodyPath);
+	// Use the body texture and body material to make a body mesh
+	const bodyMat = new THREE.MeshStandardMaterial({
+		map: bodyTexture,
+	});
+	// Create a body
+	const body = new THREE.Mesh(bodyGeom, bodyMat);
+
+	// Create a pivot to control the planet's orbit around the Sun, then add the body to the pivot
+	const pivot = new THREE.Object3D();
+	pivot.add(body);
+
+	// Add the pivot and set the body's distance from the Sun
+	scene.add(pivot);
+	body.position.set(distance, 0, 0);
+
+	// Create a repres
+
+	// This if statement is run if the ring's inner and outer radii are passed in a list
+	if (ringRadii) {
+		
+		const ring = createRing(bodyName, ringRadii);
+
+		// Add the ring to the pivot and set its distance from the Sun
+		pivot.add(ring);
+		ring.position.set(distance, 0, 0);
+		ring.rotation.x = -0.5 * Math.PI;
+
+		// Return body, ring, pivot so they can be accessed later
+		return {body, ring, pivot}
+
+	}
+
+	// If ring is not rendered, just return a body and pivot
+	return {body, pivot}
+}
+
+// set the orbital period and rotation period
+// PARAMETERS
+// body: the body we want to modify (example: earth)
+// yearLength: the year length in Earth days (i.e. 365)
+// dayLength: the day length in Earth days (i.e. 1)
+
+function setPeriods(body, dayLength, yearLength) {
+	
+	// orbitalPeriod: orbital period in radians/seconds
+	// rotationPeriod: rotation period in radians/seconds
+	var orbitalPeriod = (Math.PI * 2) / (yearLength * 86400);
+	var rotationPeriod = (Math.PI * 2) / (dayLength * 86400);
+
+	// Scale it so it doesn't take a gorillion years for anything to happen lmfao
+	const scale = 250;
+	orbitalPeriod *= scale;
+	rotationPeriod *= scale;
+
+	// implement each accordingly
+	body.pivot.rotation.y += orbitalPeriod;
+	body.body.rotation.y += rotationPeriod;
+
+}
+
+// set the axial tilt and orbital inclination
+// PARAMETERS
+// body: the body we want to modify (example: earth)
+// tilt: the axial tilt in degrees (i.e. 23.44)
+// inclination: the orbital inclination to the ecliptic in degrees (i.e. 7.155)
+function setTilts(body, tilt, inclination) {
+	// convert to radians
+	tilt *= Math.PI / 180;
+	inclination *= Math.PI / 180;
+
+	// set each accordingly
+	body.body.rotation.x += tilt;
+	body.pivot.rotation.x += inclination;
+	// body.orbit.rotation.x += inclination;
+}
 
 // Sun
 const sunGeom = new THREE.SphereGeometry(5);
@@ -74,79 +182,37 @@ const sun = new THREE.Mesh(sunGeom, sunMaterial);
 const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 
 // Main planets
-const mercury = createSphere("mercury", 2.44);
-const venus = createSphere("venus", 6.052);
-const earth = createSphere("earth", 6.371);
-const mars = createSphere("mars", 3.390);
-const jupiter = createSphere("jupiter", 69.911);
+const mercury = createBody("mercury", 1, 25);
 
-const saturn = createSphere("saturn", 58.232);
-const saturnRing = createRing("saturn", {innerRadius: 70, outerRadius: 130});
-saturnRing.rotation.x = -0.5 * Math.PI;
+const orbit = createOrbit(mercury, 57.91, 55.91, 2.04, 7);
 
-const uranus = createSphere("uranus", 25.362);
+const venus = createBody("venus", 3, 50);
+setTilts(venus, 2.64, 3.39);
 
-const neptune = createSphere("neptune", 24.622);
+const earth = createBody("earth", 3, 75);
+setTilts(earth, 23.439, 0);
 
-// Moons
-const titan = createSphere("titan", 1);
+const mars = createBody("mars", 1.5, 100);
+setTilts(mars, 25.19, 1.85);
 
+const jupiter = createBody("jupiter", 10, 200);
+setTilts(jupiter, 3.13, 1.3);
+
+const saturn = createBody("saturn", 9, 300, {innerRadius: 10, outerRadius: 20});
+setTilts(saturn, 26.73, 2.49);
+
+const uranus = createBody("uranus", 6, 400);
+setTilts(uranus, 97.77, 0.77);
+
+const neptune = createBody("neptune", 6, 500);
+setTilts(neptune, 28, 1.77);
+
+const pluto = createBody("pluto", 1, 550);
+setTilts(pluto, 120, 17.2);
 
 // add wanted objects to scene
 scene.add(sun);
 scene.add(pointLight);
-
-// Mercury
-const mercuryObj = new THREE.Object3D();
-scene.add(mercuryObj);
-mercuryObj.add(mercury);
-mercury.position.set(57.9, 0, 0)
-
-// Venus
-const venusObj = new THREE.Object3D();
-scene.add(venusObj);
-venusObj.add(venus);
-venus.position.set(108.2, 0, 0);
-
-// Earth
-const earthObj = new THREE.Object3D();
-scene.add(earthObj);
-earthObj.add(earth);
-earth.position.set(149.6, 0, 0);
-earth.rotation.z += 0.383972
-
-// Mars
-const marsObj = new THREE.Object3D();
-scene.add(marsObj);
-marsObj.add(mars);
-mars.position.set(227.9, 0, 0);
-
-// Jupiter
-const jupiterObj = new THREE.Object3D();
-scene.add(jupiterObj);
-jupiterObj.add(jupiter);
-jupiter.position.set(778.6, 0, 0);
-
-// Saturn
-const saturnObj = new THREE.Object3D();
-scene.add(saturnObj);
-saturnObj.add(saturn);
-saturnObj.add(saturnRing);
-saturn.position.set(1433.5, 0, 0);
-saturnRing.position.set(1433.5, 0, 0);
-
-// Uranus
-const uranusObj = new THREE.Object3D();
-scene.add(uranusObj);
-uranusObj.add(uranus);
-uranus.position.set(2872.5, 0, 0);
-
-// Neptune
-const neptuneObj = new THREE.Object3D();
-scene.add(neptuneObj);
-neptuneObj.add(neptune);
-neptune.position.set(4495.1, 0, 0);
-
 
 // Do all animation in this function
 function animate() {
@@ -154,41 +220,33 @@ function animate() {
 
     sun.rotation.y += 0.005;
 
+	// setPeriods(planet, dayLength, yearLength)
 
-	// planet.rotation.y += 1 radian / num days
-	// planetObj.rotation.y += orbital angular velocity
 	// Mercury
-	mercury.rotation.y += 0.00001695;
-	mercuryObj.rotation.y += 0.008264;
+	setPeriods(mercury, 59, 88)
 
 	// Venus
-	venus.rotation.y -= 0.000004444;
-	venusObj.rotation.y += 0.003232;
+	setPeriods(venus, -243, 224.7)
 
 	// Earth
-	earth.rotation.y += 0.001;
-	earthObj.rotation.y += 0.001992;
+	setPeriods(earth, 1, 365.256);
 
 	// Mars
-	mars.rotation.y += 0.0009732;
-	marsObj.rotation.y += 0.001059;
+	setPeriods(mars, 1.02749125, 686.980);
 
 	// Jupiter
-	jupiter.rotation.y -= 0.0023809;
-	jupiterObj.rotation.y += 0.0001673;
+	setPeriods(jupiter, 0.42, 4333);
 
 	// Saturn
-	saturn.rotation.y += 0.00217391;
-	saturnObj.rotation.y += 0.00009294;
+	setPeriods(saturn, 0.46, 10756);
 
 	// Uranus
-	uranus.rotation.y += 0.00140845;
-	uranusObj.rotation.y += 0.0000237;
+	setPeriods(uranus, 0.71, 30687);
 
 	// Neptune
-	neptune.rotation.y += 0.0014925;
-	neptuneObj.rotation.y += 0.00001208;
+	setPeriods(neptune, 0.67, 60190);
 
+	setPeriods(pluto, 6, 90520);
 
     renderer.render(scene, camera);
 }
