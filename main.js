@@ -114,8 +114,6 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 	scene.add(pivot);
 	body.position.set(distance, 0, 0);
 
-	// Create a repres
-
 	// This if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
 		
