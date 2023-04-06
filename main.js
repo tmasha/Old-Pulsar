@@ -87,8 +87,7 @@ function createOrbit(body, a, b, tilt, inclination) {
     // set axial tilt and orbital inclination
     tilt *= Math.PI / 180;
     inclination *= Math.PI / 180;
-    body.body.rotation.x += tilt;
-    body.pivot.rotation.x += inclination;
+    orbit.rotation.x += inclination;
 }
 
 
