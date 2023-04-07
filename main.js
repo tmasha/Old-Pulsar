@@ -71,13 +71,13 @@ function createOrbit(body, a, b, inclination) {
 
     // set axial tilt and orbital inclination
     inclination *= Math.PI / 180;
-    orbit.rotation.x += inclination;
+    orbit.rotation.x += inclination + (Math.PI / 2);
 
 	return {orbit, curve};
 }
 
 
-function createBody(bodyName, bodyRadius, distance, ringRadii) {
+function createBody(bodyName, bodyRadius, orbitParameters, ringRadii) {
 
 	// Create the body's geometry using the body's Radius
 	const bodyGeom = new THREE.SphereGeometry(bodyRadius);
@@ -97,7 +97,13 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 
 	// Add the pivot and set the body's distance from the Sun
 	scene.add(pivot);
-	body.position.set(distance, 0, 0);
+	// body.position.set(distance, 0, 0);
+
+	const orbit = createOrbit(
+		bodyName, 
+		orbitParameters.a,
+		orbitParameters.b,
+		orbitParameters.inclination);
 
 	// This if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
@@ -106,16 +112,16 @@ function createBody(bodyName, bodyRadius, distance, ringRadii) {
 
 		// Add the ring to the pivot and set its distance from the Sun
 		pivot.add(ring);
-		ring.position.set(distance, 0, 0);
+		// ring.position.set(distance, 0, 0);
 		ring.rotation.x = -0.5 * Math.PI;
 
 		// Return body, ring, pivot so they can be accessed later
-		return {body, ring, pivot}
+		return {body, ring, pivot, orbit}
 
 	}
 
 	// If ring is not rendered, just return a body and pivot
-	return {body, pivot}
+	return {body, pivot, orbit}
 }
 
 function createRing(bodyName, ringRadii) {
@@ -189,11 +195,10 @@ const sun = new THREE.Mesh(sunGeom, sunMaterial);
 const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 
 // Main planets
-const mercury = createBody("mercury", 1, 25);
+const mercury = createBody("mercury", 2.4397, {a: 57.91, b: 55.91, inclination: 7});
 
-const orbit = createOrbit(mercury, 57.91, 55.91, 7);
-scene.add(orbit);
 
+/*
 const venus = createBody("venus", 3, 50);
 // setTilts(venus, 2.64, 3.39);
 
@@ -217,6 +222,7 @@ const neptune = createBody("neptune", 6, 500);
 
 const pluto = createBody("pluto", 1, 550);
 // setTilts(pluto, 120, 17.2);
+*/
 
 // add wanted objects to scene
 scene.add(sun);
@@ -232,7 +238,7 @@ function animate() {
 	// setPeriods(planet, dayLength, yearLength)
 
 	// Mercury
-	updateBodyPosition(mercury.body, orbit.curve, time);
+	updateBodyPosition(mercury.body, mercury.orbit.curve, time);
 
 	/*
 	// Venus
