@@ -27,22 +27,6 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.update();
 
-// creates clock needed to track time
-const clock = new THREE.Clock();
-
-// This function creates a celestial body
-// PARAMETERS;
-// bodyName: The name of the body as a lowercase String (for example: "earth")
-// bodyRadius: The radius of the body (for example: 20.0)
-// distance: The body's distance from the Sun (for example: 100.0)
-// ringRadii: A list containing the inner and outer ring radii (for example: {innerRadius: 10, outerRadius: 20})
-
-
-
-// Create a representation for the object's orbit
-// distance: distance from the Sun
-
-
 // Create a representation for the orbit
 // PARAMETERS
 // a: semi-major axis in million km
@@ -70,7 +54,11 @@ function createOrbit(body, a, b, inclination) {
     const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
 	orbitGeom.rotateX(totalOrbitRotationY);
 
-    const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff });
+    const orbitMat = new THREE.LineBasicMaterial({ 
+		color: 0xffffff,
+		transparent: true,
+		opacity: 0.5
+	 });
     const orbit = new THREE.Line(orbitGeom, orbitMat);
 	// add orbit to scene
     scene.add(orbit);
@@ -185,34 +173,6 @@ const sunMaterial = new THREE.MeshBasicMaterial( { color:0xffffff } );
 const sun = new THREE.Mesh(sunGeom, sunMaterial);
 const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 
-
-
-/*
-const venus = createBody("venus", 3, 50);
-// setTilts(venus, 2.64, 3.39);
-
-const earth = createBody("earth", 3, 75);
-// setTilts(earth, 23.439, 0);
-
-const mars = createBody("mars", 1.5, 100);
-// setTilts(mars, 25.19, 1.85);
-
-const jupiter = createBody("jupiter", 10, 200);
-// setTilts(jupiter, 3.13, 1.3);
-
-const saturn = createBody("saturn", 9, 300, {innerRadius: 10, outerRadius: 20});
-// setTilts(saturn, 26.73, 2.49);
-
-const uranus = createBody("uranus", 6, 400);
-// setTilts(uranus, 97.77, 0.77);
-
-const neptune = createBody("neptune", 6, 500);
-// setTilts(neptune, 28, 1.77);
-
-const pluto = createBody("pluto", 1, 550);
-// setTilts(pluto, 120, 17.2);
-*/
-
 // add wanted objects to scene
 scene.add(sun);
 scene.add(pointLight);
@@ -244,25 +204,39 @@ function updateBodyPosition(body, orbitalPeriod, rotationPeriod) {
 	}
 }
 
-// Main planets
+// name, radius, {semimajor axis, semiminor axis, inclination}, {ring inner radius, ring outer radius}
+// Main Planets
 const mercury = createBody("mercury", 2.4397, {a: 57.91, b: 55.91, inclination: 7});
 const venus = createBody("venus", 6.0518, {a: 108.209475, b: 108.208930, inclination: 3.39});
 const earth = createBody("earth", 6.371, {a: 149.598262, b: 149.577461, inclination: 0});
 const mars = createBody("mars", 3.3895, {a: 227.943824, b: 227.943824, inclination: 1.85});
 const jupiter = createBody("jupiter", 69.911, {a: 778.340821, b: 778.340821, inclination: 1.30});
-const saturn = createBody("saturn", 58.232, {a: 1426.666422, b: 1426.666422, inclination: 2.49}, {innerRadius: 66.9, outerRing: 136.775});
+const saturn = createBody("saturn", 58.232, {a: 1426.666422, b: 1426.666422, inclination: 2.49}, {innerRadius: 66.9, outerRadius: 136.775});
+const uranus = createBody("uranus", 25.362, {a: 2870.658186, b: 2870.658186, inclination: 0.77});
+const neptune = createBody("neptune", 24.622, {a: 4498.396441, b: 4498.396441, inclination: 1.77});
+
+// Dwarf Planets
+const ceres = createBody("ceres", 0.4762, {a: 413.69, b: 382.67, inclination: 10.59});
+const pluto = createBody("pluto", 1.186, {a: 5906.38, b: 4436.82, inclination: 17.14});
 
 // Do all animation in this function
 function animate() {
     requestAnimationFrame(animate);
 
-	// Main planets (final parameter: year length in days)
+	// Main planets 
+	// name, year (days), day (days)
 	updateBodyPosition(mercury, 87.97);
 	updateBodyPosition(venus, 224.70);
 	updateBodyPosition(earth, 365.26);
 	updateBodyPosition(mars, 686.98);
 	updateBodyPosition(jupiter, 4332.59);
 	updateBodyPosition(saturn, 10855.7);
+	updateBodyPosition(uranus, 30687.15)
+	updateBodyPosition(neptune, 60190.03);
+
+	// Dwarf planets
+	updateBodyPosition(ceres, 1682.14);
+	updateBodyPosition(pluto, 90560.73);
 
 	/*
 
