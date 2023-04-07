@@ -53,7 +53,7 @@ function createOrbit(body, a, b, inclination) {
     
 	// eccentricity = Math.sqrt(1 - (b*b) / (a*a))
     // create ellipse curve for orbit
-    var curve = new THREE.EllipseCurve(
+    const curve = new THREE.EllipseCurve(
         0, 0, // x, y
         a, b, // xRadius, yRadius
         0, 2 * Math.PI, // startAngle, endAngle
@@ -61,19 +61,22 @@ function createOrbit(body, a, b, inclination) {
         0 // rotation
     );
 	
+	// total rotation of the orbit around the x axis
+    inclination *= Math.PI / 180;
+	const totalOrbitRotationY = inclination + (Math.PI / 2);
+		
     // create orbit path from curve
     const orbitPath = curve.getPoints(100);
     const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
+	orbitGeom.rotateX(totalOrbitRotationY);
+
     const orbitMat = new THREE.LineBasicMaterial({ color: 0xffffff });
     const orbit = new THREE.Line(orbitGeom, orbitMat);
 	// add orbit to scene
     scene.add(orbit);
 
-    // set axial tilt and orbital inclination
-    inclination *= Math.PI / 180;
-    orbit.rotation.x += inclination + (Math.PI / 2);
 
-	return {orbit, curve};
+	return {orbit, curve, orbitGeom};
 }
 
 
