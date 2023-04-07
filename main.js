@@ -91,16 +91,9 @@ function createBody(bodyName, bodyRadius, orbitParameters, ringRadii) {
 	const bodyMat = new THREE.MeshStandardMaterial({
 		map: bodyTexture,
 	});
-	// Create a body
+	// creates a body and add it to the scene
 	const body = new THREE.Mesh(bodyGeom, bodyMat);
-
-	// Create a pivot to control the planet's orbit around the Sun, then add the body to the pivot
-	const pivot = new THREE.Object3D();
-	pivot.add(body);
-
-	// Add the pivot and set the body's distance from the Sun
-	scene.add(pivot);
-	// body.position.set(distance, 0, 0);
+	scene.add(body);
 
 	const orbit = createOrbit(
 		bodyName, 
@@ -108,23 +101,23 @@ function createBody(bodyName, bodyRadius, orbitParameters, ringRadii) {
 		orbitParameters.b,
 		orbitParameters.inclination);
 
-	// This if statement is run if the ring's inner and outer radii are passed in a list
+	// this if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
 		
 		const ring = createRing(bodyName, ringRadii);
 
 		// Add the ring to the pivot and set its distance from the Sun
-		pivot.add(ring);
+		scene.add(ring);
 		// ring.position.set(distance, 0, 0);
-		ring.rotation.x = -0.5 * Math.PI;
+		ring.rotateX(0.5 * Math.PI);
 
-		// Return body, ring, pivot so they can be accessed later
-		return {body, ring, pivot, orbit}
+		// return body, ring, and orbit
+		return {body, orbit, ring}
 
 	}
 
 	// If ring is not rendered, just return a body and pivot
-	return {body, pivot, orbit}
+	return {body, orbit}
 }
 
 function createRing(bodyName, ringRadii) {
@@ -257,7 +250,7 @@ const venus = createBody("venus", 6.0518, {a: 108.209475, b: 108.208930, inclina
 const earth = createBody("earth", 6.371, {a: 149.598262, b: 149.577461, inclination: 0});
 const mars = createBody("mars", 3.3895, {a: 227.943824, b: 227.943824, inclination: 1.85});
 const jupiter = createBody("jupiter", 69.911, {a: 778.340821, b: 778.340821, inclination: 1.30});
-const saturn = createBody("saturn", 58.232, {a: 1426.666422, b: 1426.666422, inclination: 2.49}, {innerRing: 66.9, outerRing: 136.775});
+const saturn = createBody("saturn", 58.232, {a: 1426.666422, b: 1426.666422, inclination: 2.49}, {innerRadius: 66.9, outerRing: 136.775});
 
 // Do all animation in this function
 function animate() {
