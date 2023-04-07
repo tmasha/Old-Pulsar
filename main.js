@@ -57,7 +57,7 @@ function createOrbit(body, a, b, inclination) {
         0, 0, // x, y
         a, b, // xRadius, yRadius
         0, 2 * Math.PI, // startAngle, endAngle
-        false, // clockwise
+        true, // clockwise
         0 // rotation
     );
 	
@@ -66,7 +66,7 @@ function createOrbit(body, a, b, inclination) {
 	const totalOrbitRotationY = inclination + (Math.PI / 2);
 		
     // create orbit path from curve
-    const orbitPath = curve.getPoints(1000);
+    const orbitPath = curve.getPoints(100000);
     const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
 	orbitGeom.rotateX(totalOrbitRotationY);
 
@@ -227,17 +227,27 @@ scene.add(sun);
 scene.add(pointLight);
 
 
-function updateBodyPosition(body, bufferGeometry, time) {
-	const positionAttribute = bufferGeometry.getAttribute('position');
+// body: body (i.e. Mercury)
+// bufferGeometry: orbit
+// orbitalPeriod: year length in days
+
+
+function updateBodyPosition(body, orbit, orbitalPeriod) {
+	
+	const timeConversionFactor = (2 * Math.PI) / (orbitalPeriod * 86400);
+
+	const time = performance.now() * timeConversionFactor;
+
+	const position = orbit.getAttribute('position');
   	const point = new THREE.Vector3();
 
   	// Calculate the index of the point on the buffer geometry at the current time
-  	const pointIndex = Math.floor((time % 1) * (positionAttribute.count - 1));
+  	const pointIndex = Math.floor((time % 1) * (position.count - 1));
 
   	// Get the position of the point on the buffer geometry at the current time
-  	point.x = positionAttribute.getX(pointIndex);
-  	point.y = positionAttribute.getY(pointIndex);
-  	point.z = positionAttribute.getZ(pointIndex);
+  	point.x = position.getX(pointIndex);
+  	point.y = position.getY(pointIndex);
+  	point.z = position.getZ(pointIndex);
 
   	// Set the position of the body to the point on the buffer geometry
   	body.position.set(point.x, point.y, point.z);
@@ -247,12 +257,10 @@ function updateBodyPosition(body, bufferGeometry, time) {
 function animate() {
     requestAnimationFrame(animate);
 
-	const time = performance.now() * 0.0001; // get current time in seconds
-
 	// setPeriods(planet, dayLength, yearLength)
 
 	// Mercury
-	updateBodyPosition(mercury.body, mercury.orbit.orbitGeom, time);
+	updateBodyPosition(mercury.body, mercury.orbit.orbitGeom, 88);
 
 	/*
 	// Venus
