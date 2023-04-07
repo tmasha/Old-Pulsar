@@ -76,7 +76,7 @@ function createOrbit(body, a, b, inclination) {
     scene.add(orbit);
 
 
-	return {orbit, curve, orbitGeom};
+	return orbitGeom;
 }
 
 
@@ -192,8 +192,6 @@ const sunMaterial = new THREE.MeshBasicMaterial( { color:0xffffff } );
 const sun = new THREE.Mesh(sunGeom, sunMaterial);
 const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 
-// Main planets
-const mercury = createBody("mercury", 2.4397, {a: 57.91, b: 55.91, inclination: 7});
 
 
 /*
@@ -233,38 +231,40 @@ scene.add(pointLight);
 
 
 function updateBodyPosition(body, orbit, orbitalPeriod) {
-	
-	const timeConversionFactor = (2 * Math.PI) / (orbitalPeriod * 86400);
-
+	// creates accurate orbital periods
+	const timeConversionFactor = ( (2 * Math.PI) / (orbitalPeriod * 86400) ) * 100;
+	// gets the time elapsed
 	const time = performance.now() * timeConversionFactor;
-
+	// retrieves position info from the orbit's buffer geometry
 	const position = orbit.getAttribute('position');
-  	const point = new THREE.Vector3();
-
-  	// Calculate the index of the point on the buffer geometry at the current time
+  	// calculates the index of the point on the buffer geometry at the current time
   	const pointIndex = Math.floor((time % 1) * (position.count - 1));
-
-  	// Get the position of the point on the buffer geometry at the current time
+  	// add the x, y, and z position at the current time to a point object
+	const point = new THREE.Vector3();
   	point.x = position.getX(pointIndex);
   	point.y = position.getY(pointIndex);
   	point.z = position.getZ(pointIndex);
-
-  	// Set the position of the body to the point on the buffer geometry
+  	// set the position of the actual body to the point on the buffer geometry
   	body.position.set(point.x, point.y, point.z);
 }
+
+// Main planets
+const mercury = createBody("mercury", 2.4397, {a: 57.91, b: 55.91, inclination: 7});
+const venus = createBody("venus", 6.0518, {a: 108.209475, b: 108.208930, inclination: 3.39});
+const earth = createBody("earth", 6.371, {a: 149.598262, b: 149.577461, inclination: 0});
+const mars = createBody("mars", 3.3895, {a: 227.943824, b: 227.943824, inclination: 1.85});
 
 // Do all animation in this function
 function animate() {
     requestAnimationFrame(animate);
 
-	// setPeriods(planet, dayLength, yearLength)
-
-	// Mercury
-	updateBodyPosition(mercury.body, mercury.orbit.orbitGeom, 88);
+	// Main planets (final parameter: year length in days)
+	updateBodyPosition(mercury.body, mercury.orbit, 87.97);
+	updateBodyPosition(venus.body, venus.orbit, 225);
+	updateBodyPosition(earth.body, earth.orbit, 365);
+	updateBodyPosition(mars.body, mars.orbit, 365);
 
 	/*
-	// Venus
-	setPeriods(venus, -243, 224.7)
 
 	// Earth
 	setPeriods(earth, 1, 365.256);
