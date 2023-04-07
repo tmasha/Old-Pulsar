@@ -66,7 +66,7 @@ function createOrbit(body, a, b, inclination) {
 	const totalOrbitRotationY = inclination + (Math.PI / 2);
 		
     // create orbit path from curve
-    const orbitPath = curve.getPoints(100);
+    const orbitPath = curve.getPoints(1000);
     const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
 	orbitGeom.rotateX(totalOrbitRotationY);
 
@@ -169,11 +169,6 @@ function setPeriods(body, dayLength, yearLength) {
 
 }
 
-function updateBodyPosition(body, curve, time) {
-	const point = curve.getPointAt(time % 1); // get point on curve at current time
-    body.position.set(point.x, point.y, point.z); // set planet's new position
-}
-
 // set the axial tilt and orbital inclination
 // PARAMETERS
 // body: the body we want to modify (example: earth)
@@ -231,17 +226,33 @@ const pluto = createBody("pluto", 1, 550);
 scene.add(sun);
 scene.add(pointLight);
 
+
+function updateBodyPosition(body, bufferGeometry, time) {
+	const positionAttribute = bufferGeometry.getAttribute('position');
+  	const point = new THREE.Vector3();
+
+  	// Calculate the index of the point on the buffer geometry at the current time
+  	const pointIndex = Math.floor((time % 1) * (positionAttribute.count - 1));
+
+  	// Get the position of the point on the buffer geometry at the current time
+  	point.x = positionAttribute.getX(pointIndex);
+  	point.y = positionAttribute.getY(pointIndex);
+  	point.z = positionAttribute.getZ(pointIndex);
+
+  	// Set the position of the body to the point on the buffer geometry
+  	body.position.set(point.x, point.y, point.z);
+}
+
 // Do all animation in this function
 function animate() {
     requestAnimationFrame(animate);
 
 	const time = performance.now() * 0.0001; // get current time in seconds
-    sun.rotation.y += 0.005;
 
 	// setPeriods(planet, dayLength, yearLength)
 
 	// Mercury
-	updateBodyPosition(mercury.body, mercury.orbit.curve, time);
+	updateBodyPosition(mercury.body, mercury.orbit.orbitGeom, time);
 
 	/*
 	// Venus
