@@ -31,55 +31,57 @@ controls.rollSpeed = 0.2;
 controls.dragToLook = true;
 
 
+// converts an angle value in degrees to radians
 function degToRad(number) {
 	return number *= Math.PI / 180;
 }
 
-// Create a representation for the orbit
+// create a representation for the orbit
 // PARAMETERS
-// a: semi-major axis in AU
-// e: eccentricity
+// a: semimajor axis in AU
+// e: orbital eccentricity
 // inclination: orbital inclination to the ecliptic in degrees
 // lAN: longitude of ascending node in degrees
 // aP: argument of periapsis in degrees
 
 function createOrbit(body, a, e, inclination, lAN, aP) {
     
-	// Calculate b (semi-major axis) from a and eccentricity
+	// calculate b (semiminor axis) from a and eccentricity
 	var b = a * Math.sqrt(1 - e*e); 
-    a *= 111;
-	b *= 111;
+    
+	// upscale a and b so the model isn't too compressed
+	a *= 100;
+	b *= 100;
 
+	// create an ellipse curve to represent the orbit
 	const curve = new THREE.EllipseCurve(
-        0, 0, // The displacement of the orbit (should always be 0)
-        a, b, // Semimajor axis, semiminor axis
-        0, 2 * Math.PI, // Start and end angle (should always be 0 and 2pi)
-        false, // Planets orbit counterclockwise
-        degToRad(aP) // rotation
+        0, 0, // x and y displacement of the orbit (should always be 0)
+        a, b, // semimajor axis, semiminor axis
+        0, 2 * Math.PI, // start and end angle (should always be 0 and 2pi to account for the whole ellipse)
+        false, // orbit is clockwise (should always be false because planets orbit vertically)
+        degToRad(aP) // rotation angle of ellipse, accounts for arg of periapsis (rotation about axis orthogonal to orbit's own plane)
     );
-	
-	// total rotation of the orbit around the x axis
-	// convert inclination to radians first
 		
-    // create orbit path from curve
-    const orbitPath = curve.getPoints(50000);
-    const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
+    // get some points from the curve and use them to create a BufferGeometry to construct the orbit
+    const orbitPoints = curve.getPoints(50000);
+    const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPoints);
 
-	// Accounts for inclination and longitude of ascending node
-	orbitGeom.rotateX(degToRad(inclination) - (Math.PI / 2));
-	orbitGeom.rotateY(degToRad(lAN));
-
+	// rotate this BufferGeometry to account for orbital inclination and longitude of ascending node
+	orbitGeom.rotateX(degToRad(inclination) - (Math.PI / 2)); // rotates orbit about the x-axis by the inclination as well as a correction factor so the orbit is horizontal
+	orbitGeom.rotateY(degToRad(lAN)); // rotates orbit about the y-axis by the longitude of ascending node
+	
+	// create a transparent white material for the orbit line render
     const orbitMat = new THREE.LineBasicMaterial({ 
 		color: 0xffffff,
 		transparent: true,
 		opacity: 0.5
 	 });
+
+	// make a line object out of the orbit geometry and material and render it
     const orbit = new THREE.Line(orbitGeom, orbitMat);
-	
-	// add orbit to scene
     scene.add(orbit);
 	
-	// return the BUFFER GEOMETRY of the orbit
+	// return the BufferGeometry of the orbit so we can use it to track the system's movement in the updateSystemPosition function
 	return orbitGeom;
 }
 
@@ -167,7 +169,7 @@ scene.add(pointLight);
 // body: body (i.e. Mercury)
 // orbitalPeriod: orbital period in days
 // rotationPeriod: rotation period in days
-function updateBodyPosition(body, orbitalPeriod, rotationPeriod) {
+function updateSystemPosition(system, orbitalPeriod, rotationPeriod) {
 	
 	// creates accurate orbital periods
 	const timeConversionFactor = ( (2 * Math.PI) / (orbitalPeriod * 86400) ) * 300;
@@ -176,7 +178,7 @@ function updateBodyPosition(body, orbitalPeriod, rotationPeriod) {
 	const time = performance.now() * timeConversionFactor;
 
 	// retrieves position info from the orbit's buffer geometry
-	const position = body.orbit.getAttribute('position');
+	const position = system.orbit.getAttribute('position');
 
   	// calculates the index of the point on the buffer geometry at the current time
   	const pointIndex = Math.floor((time % 1) * (position.count - 1));
@@ -188,16 +190,16 @@ function updateBodyPosition(body, orbitalPeriod, rotationPeriod) {
   	point.z = position.getZ(pointIndex);
 
   	// set the position of the actual body to the point on the buffer geometry
-  	body.body.position.set(point.x, point.y, point.z);
+  	system.body.position.set(point.x, point.y, point.z);
 	
 	// rotation of planet
 	rotationPeriod = (2 * Math.PI) / rotationPeriod * 0.1;
-	body.body.rotation.y += rotationPeriod * (Math.PI / 180);
+	system.body.rotation.y += rotationPeriod * (Math.PI / 180);
 
 	// modify ring position as well, if the ring exists
-	if (body.ring) {
-		body.ring.position.set(point.x, point.y, point.z);
-		body.body.rotation.y += rotationPeriod * (Math.PI / 180);
+	if (system.ring) {
+		system.ring.position.set(point.x, point.y, point.z);
+		system.body.rotation.y += rotationPeriod * (Math.PI / 180);
 	}
 }
 
@@ -235,7 +237,7 @@ function animate() {
 
 	// Main planets 
 	// name, year (days), day (days)
-	updateBodyPosition(mercury, 87.97, 58.6);
+	updateSystemPosition(mercury, 87.97, 58.6);
 	
 	/*
 	updateBodyPosition(venus, 224.70, -243);
