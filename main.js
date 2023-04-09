@@ -31,43 +31,43 @@ controls.rollSpeed = 0.2;
 controls.dragToLook = true;
 
 
-
+function degToRad(number) {
+	return number *= Math.PI / 180;
+}
 
 // Create a representation for the orbit
 // PARAMETERS
-// a: semi-major axis in million km
-// b: semi-major axis in million km
-// tilt: the axial tilt in degrees (i.e. 23.44)
-// inclination: the orbital inclination to the ecliptic in degrees (i.e. 7.155)
-function createOrbit(body, a, e, inclination, lAN) {
-	// eccentricity = Math.sqrt(1 - (b*b) / (a*a))
-    // create ellipse curve for orbit
+// a: semi-major axis in AU
+// e: eccentricity
+// inclination: orbital inclination to the ecliptic in degrees
+// lAN: longitude of ascending node in degrees
+// aP: argument of periapsis in degrees
+
+function createOrbit(body, a, e, inclination, lAN, aP) {
+    
+	// Calculate b (semi-major axis) from a and eccentricity
 	var b = a * Math.sqrt(1 - e*e); 
     a *= 111;
 	b *= 111;
-	
-	// total rotation of orbit around 
-	lAN *= Math.PI / 180;
 
 	const curve = new THREE.EllipseCurve(
-        0, 0, // x, y
-        a, b, // xRadius, yRadius
-        0, 2 * Math.PI, // startAngle, endAngle
-        true, // clockwise
-        0 // rotation
+        0, 0, // The displacement of the orbit (should always be 0)
+        a, b, // Semimajor axis, semiminor axis
+        0, 2 * Math.PI, // Start and end angle (should always be 0 and 2pi)
+        false, // Planets orbit counterclockwise
+        degToRad(aP) // rotation
     );
 	
 	// total rotation of the orbit around the x axis
 	// convert inclination to radians first
-    inclination *= Math.PI / 180;
-	const totalOrbitRotationY = inclination + (Math.PI / 2);
-
 		
     // create orbit path from curve
     const orbitPath = curve.getPoints(50000);
     const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
-	orbitGeom.rotateX(totalOrbitRotationY);
-	orbitGeom.rotateY(lAN);
+
+	// Accounts for inclination and longitude of ascending node
+	orbitGeom.rotateX(degToRad(inclination) - (Math.PI / 2));
+	orbitGeom.rotateY(degToRad(lAN));
 
     const orbitMat = new THREE.LineBasicMaterial({ 
 		color: 0xffffff,
@@ -112,7 +112,9 @@ function createBody(bodyName, bodyRadius, orbitParameters, axialTilt, ringRadii)
 		orbitParameters.a,
 		orbitParameters.e,
 		orbitParameters.i,
-		orbitParameters.lAN);
+		orbitParameters.lAN,
+		orbitParameters.aP
+	);
 
 	// this if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
@@ -201,7 +203,9 @@ function updateBodyPosition(body, orbitalPeriod, rotationPeriod) {
 
 // name, radius, {semimajor axis, semiminor axis, inclination}, {ring inner radius, ring outer radius}
 // Main Planets
-const mercury = createBody("mercury", 2.4397, {a: 0.3871, e: 0.2056, i: 7, lAN: 48.331}, 0.034);
+const mercury = createBody("mercury", 2.4397, {a: 0.387098, e: 0.205630, i: 7, lAN: 48.331, aP: 29.124}, 0.034);
+
+/*
 const venus = createBody("venus", 6.0518, {a: 0.7233, e: 0.0068, i: 3.39, lAN: 76.680}, 177.36);
 const earth = createBody("earth", 6.371, {a: 1, e: 0.0167, i: 0, lAN: 348.379}, 23.44);
 const mars = createBody("mars", 3.3895, {a: 1.5237, e: 0.0934, i: 1.85, lAN: 49.562}, 25.19);
@@ -217,10 +221,12 @@ const eris = createBody("eris", 1.163, {a: 67.781, e: 0.4417, i: 44.05, lAN: 35.
 const makemake = createBody("makemake", 0.715, {a: 45.7912, e: 0.155, i: 29.006, lAN: 79.380}, 10);
 const haumea = createBody("haumea", 0.62, {a: 43.3351, e: 0.195, i: 28.19, lAN: 240.739}, 115);
 
-// const sedna = createBody("sedna", 0.498, {a: 76.04, b: 506.7, inclination: 11.93, lAN: 114.273}, 1);
-// const quaoar = createBody("quaoar", 0.555, {a: 43.39, b: 41.65, inclination: 7.99, lAN: 118.183}, 1);
-// const gonggong = createBody("gonggong", 0.615, {a: 82.1, b: 39.2, inclination: 30.59, lAN: 184.856}, 1);
-// const orcus = createBody("orcus", {a: 39.29, b: 38.54, inclination: 20.57, lAN: 70.132}, 1);
+const sedna = createBody("sedna", 0.498, {a: 76.04, b: 506.7, inclination: 11.93, lAN: 114.273}, 1);
+const quaoar = createBody("quaoar", 0.555, {a: 43.39, b: 41.65, inclination: 7.99, lAN: 118.183}, 1);
+const gonggong = createBody("gonggong", 0.615, {a: 82.1, b: 39.2, inclination: 30.59, lAN: 184.856}, 1);
+const orcus = createBody("orcus", {a: 39.29, b: 38.54, inclination: 20.57, lAN: 70.132}, 1);
+
+*/
 
 // Do all animation in this function
 function animate() {
@@ -230,6 +236,8 @@ function animate() {
 	// Main planets 
 	// name, year (days), day (days)
 	updateBodyPosition(mercury, 87.97, 58.6);
+	
+	/*
 	updateBodyPosition(venus, 224.70, -243);
 	updateBodyPosition(earth, 365.26, 1);
 	updateBodyPosition(mars, 686.98, 1.03);
@@ -245,11 +253,11 @@ function animate() {
 	updateBodyPosition(makemake, 112897, 0.94);
 	updateBodyPosition(haumea, 103721, 0.16);
 
-	// updateBodyPosition(sedna, 4163850, 1);
-	// updateBodyPosition(quaoar, 287.5, 0.736);
-	// updateBodyPosition(gonggong, 558.5, 1);
-	// updateBodyPosition(orcus, 247.2, 1);
-
+	updateBodyPosition(sedna, 4163850, 1);
+	updateBodyPosition(quaoar, 287.5, 0.736);
+	updateBodyPosition(gonggong, 558.5, 1);
+	updateBodyPosition(orcus, 247.2, 1);
+	*/
 
     renderer.render(scene, camera);
 }
