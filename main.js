@@ -31,7 +31,10 @@ controls.rollSpeed = 0.2;
 controls.dragToLook = true;
 
 
-
+function degToRad(number) {
+	number *= Math.PI / 180;
+	return number;
+}
 
 // Create a representation for the orbit
 // PARAMETERS
@@ -39,22 +42,25 @@ controls.dragToLook = true;
 // b: semi-major axis in million km
 // tilt: the axial tilt in degrees (i.e. 23.44)
 // inclination: the orbital inclination to the ecliptic in degrees (i.e. 7.155)
-function createOrbit(body, a, e, inclination, lAN) {
+function createOrbit(body, a, e, inclination, lAN, aP) {
 	// eccentricity = Math.sqrt(1 - (b*b) / (a*a))
     // create ellipse curve for orbit
+	
 	var b = a * Math.sqrt(1 - e*e); 
     a *= 111;
 	b *= 111;
 	
 
-	const curve = new THREE.EllipseCurve(
+	var curve = new THREE.EllipseCurve(
         0, 0, // x, y
         a, b, // xRadius, yRadius
         0, 2 * Math.PI, // startAngle, endAngle
-        true, // clockwise
-        0 // rotation
+        false, // clockwise
+        degToRad(aP) // rotation
     );
 	
+
+	// apply the rotation to the curve
 
 
 	// total rotation of the orbit around the x axis
@@ -64,7 +70,7 @@ function createOrbit(body, a, e, inclination, lAN) {
 
 		
     // create orbit path from curve
-    const orbitPath = curve.getPoints(50000);
+    const orbitPath = curve.getPoints(100);
     const orbitGeom = new THREE.BufferGeometry().setFromPoints(orbitPath);
 
     const orbitMat = new THREE.LineBasicMaterial({ 
@@ -111,7 +117,9 @@ function createBody(bodyName, bodyRadius, orbitParameters, axialTilt, ringRadii)
 		orbitParameters.a,
 		orbitParameters.e,
 		orbitParameters.i,
-		orbitParameters.lAN);
+		orbitParameters.lAN,
+		orbitParameters.aP
+	);
 
 	// this if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
@@ -218,7 +226,7 @@ function updateBodyPosition(body, orbitalPeriod, rotationPeriod) {
 
 // name, radius, {semimajor axis, semiminor axis, inclination}, {ring inner radius, ring outer radius}
 // Main Planets
-const mercury = createBody("mercury", 2.4397, {a: 0.387098, e: 0.205630, i: 7, lAN: 48.331}, 0.034);
+const mercury = createBody("mercury", 2.4397, {a: 0.387098, e: 0.205630, i: 7, lAN: 48.331, aP: 29.124}, 0.034);
 /*
 const venus = createBody("venus", 6.0518, {a: 0.7233, e: 0.0068, i: 3.39, lAN: 76.680}, 177.36);
 const earth = createBody("earth", 6.371, {a: 1, e: 0.0167, i: 0, lAN: 348.379}, 23.44);
