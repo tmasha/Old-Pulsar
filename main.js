@@ -87,10 +87,7 @@ function createOrbit(a, e, inclination, lAN, aP) {
 
 // sets the axial tilt of the planet (body, tilt in degrees)
 function setTilt(body, tilt) {
-	// convert to radians
-	tilt *= Math.PI / 180;
-	// set it
-	body.rotation.x += tilt;
+	body.rotation.x += degToRad(tilt);
 }
 
 function createBody(bodyName, bodyRadius, orbitParameters, axialTilt, ringRadii) {
@@ -202,21 +199,25 @@ function updateSystemPosition(system, orbitalPeriod, rotationPeriod) {
 }
 
 // name, radius, {semimajor axis, semiminor axis, inclination}, {ring inner radius, ring outer radius}
-// Main Planets
-const mercury = createBody("mercury", 2.4397, {a: 0.387098, e: 0.205630, i: 7, lAN: 48.331, aP: 29.124}, 0.034);
+// Inner Solar System
+const mercury = createBody("mercury", 2.4397, {a: 0.387098, e: 0.205630, i: 7.005, lAN: 48.331, aP: 29.124}, 0.034);
+const venus = createBody("venus", 6.0518, {a: 0.723332, e: 0.006772, i: 3.39458, lAN: 76.680, aP: 54.884}, 177.36);
+const earth = createBody("earth", 6.371, {a: 1, e: 0.0167086, i: 0, lAN: -11.26064, aP: 114.20783}, 23.44);
+const mars = createBody("mars", 3.3895, {a: 1.52368055, e: 0.0934, i: 1.85, lAN: 49.57854, aP: 296.5}, 25.19);
+
+// Asteroid Belt
+const ceres = createBody("ceres", 0.4762, {a: 2.7658, e: 0.078, i: 10.607, lAN: 80.7, aP: 73.1}, 4);
+
+const jupiter = createBody("jupiter", 69.911, {a: 5.2026, e: 0.0489, i: 1.303, lAN: 100.464, aP: 273.867}, 3.13);
+
+const saturn = createBody("saturn", 58.232, {a: 9.5826, e: 0.0565, i: 2.485, lAN: 113.665, aP: 339.392}, 26.73, {innerRadius: 66.9, outerRadius: 136.775});
+const uranus = createBody("uranus", 25.362, {a: 19.19126, e: 0.04717, i: 0.773, lAN: 74.006, aP: 96.998857}, 97.77);
+const neptune = createBody("neptune", 24.622, {a: 30.07, e: 0.008678, i: 1.77, lAN: 131.783, aP: 273.187}, 28.32);
+
+const pluto = createBody("pluto", 1.186, {a: 39.482, e: 0.2488, i: 17.16, lAN: 110.299, aP: 113.834}, 112.53);
 
 /*
-const venus = createBody("venus", 6.0518, {a: 0.7233, e: 0.0068, i: 3.39, lAN: 76.680}, 177.36);
-const earth = createBody("earth", 6.371, {a: 1, e: 0.0167, i: 0, lAN: 348.379}, 23.44);
-const mars = createBody("mars", 3.3895, {a: 1.5237, e: 0.0934, i: 1.85, lAN: 49.562}, 25.19);
 
-const jupiter = createBody("jupiter", 69.911, {a: 5.2026, e: 0.0489, i: 1.30, lAN: 100.492}, 3.13);
-const saturn = createBody("saturn", 58.232, {a: 9.5549, e: 0.0565, i: 2.49, lAN: 113.642}, 26.73, {innerRadius: 66.9, outerRadius: 136.775});
-const uranus = createBody("uranus", 25.362, {a: 19.2184, e: 0.0457, i: 0.77, lAN: 74.006}, 97.77);
-const neptune = createBody("neptune", 24.622, {a: 30.1104, e: 0.0113, i: 1.77, lAN: 131.784}, 28.32);
-
-const ceres = createBody("ceres", 0.4762, {a: 2.7675, e: 0.076, i: 10.59, lAN: 80.393}, 4);
-const pluto = createBody("pluto", 1.186, {a: 39.4821, e: 0.2488, i: 17.14, lAN: 110.303}, 112.53);
 const eris = createBody("eris", 1.163, {a: 67.781, e: 0.4417, i: 44.05, lAN: 35.953}, 75);
 const makemake = createBody("makemake", 0.715, {a: 45.7912, e: 0.155, i: 29.006, lAN: 79.380}, 10);
 const haumea = createBody("haumea", 0.62, {a: 43.3351, e: 0.195, i: 28.19, lAN: 240.739}, 115);
@@ -237,18 +238,24 @@ function animate() {
 	// name, year (days), day (days)
 	updateSystemPosition(mercury, 87.97, 58.6);
 	
-	/*
-	updateBodyPosition(venus, 224.70, -243);
-	updateBodyPosition(earth, 365.26, 1);
-	updateBodyPosition(mars, 686.98, 1.03);
-	updateBodyPosition(jupiter, 4332.59, 0.41);
-	updateBodyPosition(saturn, 10855.7, 0.44);
-	updateBodyPosition(uranus, 30687.15, 0.72);
-	updateBodyPosition(neptune, 60190.03, 0.67);
+	
+	updateSystemPosition(venus, 224.70, -243);
+	updateSystemPosition(earth, 365.26, 1);
+	updateSystemPosition(mars, 686.98, 1.03);
+
+	updateSystemPosition(ceres, 1682.14, 0.38);
+	
+	updateSystemPosition(jupiter, 4332.59, 0.41);
+
+	
+	updateSystemPosition(saturn, 10855.7, 0.44);
+	updateSystemPosition(uranus, 30687.15, 0.72);
+	updateSystemPosition(neptune, 60190.03, 0.67);
 
 	// Dwarf planets
-	updateBodyPosition(ceres, 1682.14, 0.38);
-	updateBodyPosition(pluto, 90560.73, -6.4);
+	updateSystemPosition(pluto, 90560.73, -6.4);
+
+	/*
 	updateBodyPosition(eris, 203810, 1.08);
 	updateBodyPosition(makemake, 112897, 0.94);
 	updateBodyPosition(haumea, 103721, 0.16);
