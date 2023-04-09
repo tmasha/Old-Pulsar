@@ -44,7 +44,7 @@ function degToRad(number) {
 // lAN: longitude of ascending node in degrees
 // aP: argument of periapsis in degrees
 
-function createOrbit(body, a, e, inclination, lAN, aP) {
+function createOrbit(a, e, inclination, lAN, aP) {
     
 	// calculate b (semiminor axis) from a and eccentricity
 	var b = a * Math.sqrt(1 - e*e); 
@@ -110,7 +110,6 @@ function createBody(bodyName, bodyRadius, orbitParameters, axialTilt, ringRadii)
 	setTilt(body, axialTilt);
 
 	const orbit = createOrbit(
-		bodyName, 
 		orbitParameters.a,
 		orbitParameters.e,
 		orbitParameters.i,
@@ -164,7 +163,6 @@ const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 // add wanted objects to scene
 scene.add(sun);
 scene.add(pointLight);
-
 
 // body: body (i.e. Mercury)
 // orbitalPeriod: orbital period in days
