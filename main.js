@@ -90,21 +90,21 @@ function setTilt(body, tilt) {
 	body.rotation.x += degToRad(tilt);
 }
 
-function createBody(bodyName, bodyRadius, orbitParameters, axialTilt, ringRadii) {
+function createPlanet(name, radius, orbitParameters, axialTilt, ringRadii) {
 
 	// Create the body's geometry using the body's Radius
-	const bodyGeom = new THREE.SphereGeometry(bodyRadius);
+	const geom = new THREE.SphereGeometry(radius);
 	// Create a path name for the body texture image file, then use that to make a body texture
-	const bodyPath = "assets/maps/" + bodyName + ".png";
-	const bodyTexture = new THREE.TextureLoader().load(bodyPath);
+	const path = "assets/maps/" + name + ".png";
+	const bodyTexture = new THREE.TextureLoader().load(path);
 	// Use the body texture and body material to make a body mesh
-	const bodyMat = new THREE.MeshStandardMaterial({
+	const mat = new THREE.MeshStandardMaterial({
 		map: bodyTexture,
 	});
 	// creates a body and add it to the scene
-	const body = new THREE.Mesh(bodyGeom, bodyMat);
-	scene.add(body);
-	setTilt(body, axialTilt);
+	const planet = new THREE.Mesh(geom, mat);
+	scene.add(planet);
+	setTilt(planet, axialTilt);
 
 	const orbit = createOrbit(
 		orbitParameters.a,
@@ -117,7 +117,7 @@ function createBody(bodyName, bodyRadius, orbitParameters, axialTilt, ringRadii)
 	// this if statement is run if the ring's inner and outer radii are passed in a list
 	if (ringRadii) {
 		
-		const ring = createRing(bodyName, ringRadii);
+		const ring = createRing(name, ringRadii);
 
 		// Add the ring to the pivot and set its distance from the Sun
 		scene.add(ring);
@@ -125,12 +125,12 @@ function createBody(bodyName, bodyRadius, orbitParameters, axialTilt, ringRadii)
 		ring.rotation.x += (0.5 * Math.PI) + (axialTilt * (Math.PI / 180));
 
 		// return body, ring, and orbit
-		return {body, orbit, ring}
+		return { planet, orbit, ring }
 
 	}
 
 	// If ring is not rendered, just return a body and pivot
-	return {body, orbit}
+	return { planet, orbit }
 }
 
 function createRing(bodyName, ringRadii) {
@@ -161,7 +161,7 @@ const pointLight = new THREE.PointLight(0xffffff, 1.3, 0);
 scene.add(sun);
 scene.add(pointLight);
 
-// body: body (i.e. Mercury)
+// system: target system we want to move
 // orbitalPeriod: orbital period in days
 // rotationPeriod: rotation period in days
 function updateSystemPosition(system, orbitalPeriod, rotationPeriod) {
@@ -185,36 +185,36 @@ function updateSystemPosition(system, orbitalPeriod, rotationPeriod) {
   	point.z = position.getZ(pointIndex);
 
   	// set the position of the actual body to the point on the buffer geometry
-  	system.body.position.set(point.x, point.y, point.z);
+  	system.planet.position.set(point.x, point.y, point.z);
 	
 	// rotation of planet
 	rotationPeriod = (2 * Math.PI) / rotationPeriod * 0.1;
-	system.body.rotation.y += rotationPeriod * (Math.PI / 180);
+	system.planet.rotation.y += rotationPeriod * (Math.PI / 180);
 
 	// modify ring position as well, if the ring exists
 	if (system.ring) {
 		system.ring.position.set(point.x, point.y, point.z);
-		system.body.rotation.y += rotationPeriod * (Math.PI / 180);
+		system.planet.rotation.y += rotationPeriod * (Math.PI / 180);
 	}
 }
 
 // name, radius, {semimajor axis, semiminor axis, inclination}, {ring inner radius, ring outer radius}
 // Inner Solar System
-const mercury = createBody("mercury", 2.4397, {a: 0.387098, e: 0.205630, i: 7.005, lAN: 48.331, aP: 29.124}, 0.034);
-const venus = createBody("venus", 6.0518, {a: 0.723332, e: 0.006772, i: 3.39458, lAN: 76.680, aP: 54.884}, 177.36);
-const earth = createBody("earth", 6.371, {a: 1, e: 0.0167086, i: 0, lAN: -11.26064, aP: 114.20783}, 23.44);
-const mars = createBody("mars", 3.3895, {a: 1.52368055, e: 0.0934, i: 1.85, lAN: 49.57854, aP: 296.5}, 25.19);
+const mercury = createPlanet("mercury", 2.4397, {a: 0.387098, e: 0.205630, i: 7.005, lAN: 48.331, aP: 29.124}, 0.034);
+const venus = createPlanet("venus", 6.0518, {a: 0.723332, e: 0.006772, i: 3.39458, lAN: 76.680, aP: 54.884}, 177.36);
+const earth = createPlanet("earth", 6.371, {a: 1, e: 0.0167086, i: 0, lAN: -11.26064, aP: 114.20783}, 23.44);
+const mars = createPlanet("mars", 3.3895, {a: 1.52368055, e: 0.0934, i: 1.85, lAN: 49.57854, aP: 296.5}, 25.19);
 
 // Asteroid Belt
-const ceres = createBody("ceres", 0.4762, {a: 2.7658, e: 0.078, i: 10.607, lAN: 80.7, aP: 73.1}, 4);
+const ceres = createPlanet("ceres", 0.4762, {a: 2.7658, e: 0.078, i: 10.607, lAN: 80.7, aP: 73.1}, 4);
 
-const jupiter = createBody("jupiter", 69.911, {a: 5.2026, e: 0.0489, i: 1.303, lAN: 100.464, aP: 273.867}, 3.13);
+const jupiter = createPlanet("jupiter", 69.911, {a: 5.2026, e: 0.0489, i: 1.303, lAN: 100.464, aP: 273.867}, 3.13);
 
-const saturn = createBody("saturn", 58.232, {a: 9.5826, e: 0.0565, i: 2.485, lAN: 113.665, aP: 339.392}, 26.73, {innerRadius: 66.9, outerRadius: 136.775});
-const uranus = createBody("uranus", 25.362, {a: 19.19126, e: 0.04717, i: 0.773, lAN: 74.006, aP: 96.998857}, 97.77);
-const neptune = createBody("neptune", 24.622, {a: 30.07, e: 0.008678, i: 1.77, lAN: 131.783, aP: 273.187}, 28.32);
+const saturn = createPlanet("saturn", 58.232, {a: 9.5826, e: 0.0565, i: 2.485, lAN: 113.665, aP: 339.392}, 26.73, {innerRadius: 66.9, outerRadius: 136.775});
+const uranus = createPlanet("uranus", 25.362, {a: 19.19126, e: 0.04717, i: 0.773, lAN: 74.006, aP: 96.998857}, 97.77);
+const neptune = createPlanet("neptune", 24.622, {a: 30.07, e: 0.008678, i: 1.77, lAN: 131.783, aP: 273.187}, 28.32);
 
-const pluto = createBody("pluto", 1.186, {a: 39.482, e: 0.2488, i: 17.16, lAN: 110.299, aP: 113.834}, 112.53);
+const pluto = createPlanet("pluto", 1.186, {a: 39.482, e: 0.2488, i: 17.16, lAN: 110.299, aP: 113.834}, 112.53);
 
 /*
 
