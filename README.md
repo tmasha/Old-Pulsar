@@ -1,2 +1,2 @@
 # Solar System Model 💫
-WIP Three.js Solar System model
+Three.js testing
